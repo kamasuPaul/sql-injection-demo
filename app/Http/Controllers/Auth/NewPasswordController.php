@@ -36,19 +36,23 @@ class NewPasswordController extends Controller
     {
         $request->validate([
             'token' => ['required'],
+            'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
         $password = $request->password;
         // hash  password
         $password = Hash::make($password);
         $email = $request->email;
-        
-        $affectd =  DB::statement("UPDATE users SET password = '$password' WHERE email = '$email'");
 
+        // update password
+        $affected = DB::table('users')
+            ->where('email', $email)
+            ->update(['password' => $password]);
+        
         // If the password was successfully reset, we will redirect the user back to
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
-        return $affectd ? redirect()->route('login')->with('status','Password reset successfully' )
+        return $affected ? redirect()->route('login')->with('status','Password reset successfully' )
                     : back()->withInput($request->only('email'))
                             ->withErrors(['email' =>'Password reset failed' ]);
     }
